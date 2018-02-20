@@ -69,6 +69,7 @@ library(plyr)
 library(dplyr)
 library(ggplot2)
 library(corrplot)
+library(reshape2)
 
 ```
 
@@ -242,6 +243,8 @@ knitr::include_graphics('images/histos_pctF_by_peninsula.png')
 
 # polygons
 ggplot(county_MI_x, aes(pct_F, fill = county_MI_x$peninsula)) +
+  scale_fill_discrete(name="peninsula") +
+  labs(title="Distrubution of Female percentage",x = "Female Percentage")+
   geom_histogram()
 
 
@@ -344,7 +347,7 @@ Which states have the highest average percentage of production workers? Just ret
 ```{r top10production}
 county_df%>% group_by(State)%>% 
   summarize(AvegragePercProduction = mean(Production))%>% 
-  arrange(desc(AvegragePerProduction))%>%
+  arrange(desc(AvegragePercProduction))%>%
 head(n=10)
 
 ```
@@ -404,8 +407,55 @@ Write a few sentences interpreting the correlation matrix.
 **Hacker Extra**: Write a function that writes out the summary statistics like
 I did in this example from our Moodle site:
 
-```{r}
+```{r collapse = TRUE,echo=FALSE,comment=NA}
 knitr::include_graphics('images/SummaryStats_Output.png')
+
+MySummaryFunc <- function(column){
+ cat('Measure of Cenral tendency')
+cat('\n----------------------------')
+cat('\nMean  :')
+cat(mean(column)) 
+cat('\nMedian  :')
+cat(median(column))
+cat('\nMidrange  :')
+cat(range(column)/2)
+cat('\n\nMeasure of Dispersion')
+cat('\n----------------------------')
+cat('\nRange :')
+cat(range(column))
+cat('\nVariance  :')
+cat(var(column))
+cat('\nSTD Deviation  :')
+cat(sd(column))
+cat('\nCV  :')
+cat(mean(column)/sd(column))
+cat('\n\nExtreme and Qunatiles')
+cat('\n----------------------------')
+cat('\nMin  :')
+cat(min(column)) 
+cat('\nMax :')
+cat(max(column))
+cat('\n5th Percentile  :')
+cat(quantile(column,0.05))
+cat('\nQ1 :')
+cat(quantile(column,0.25))
+cat('\nQ2 :')
+cat(quantile(column,0.5))
+cat('\nQ3 :')
+cat(quantile(column,0.75))
+cat('\n95th Percentile :')
+cat(quantile(column,0.95))
+
+
+}
+
+
+
+
+MySummaryFunc(county_MI$TotalPop)
+
+
+
 ```
 
 
@@ -414,16 +464,25 @@ Compute the proportion of counties in the US with total population greater than 
 You can do this very easily without dplyr. Hint: mean(). No need for plyr or dplyr.
 
 ```{r pctgt75k}
-# mean(???)
+#With Mean 
+mean(county_df$TotalPop>75000)
+
+#Without Mean 
+test <- county_df$TotalPop>75000
+proportion <- sum(test)/length(test)
+proportion
 ```
 
 Use dplyr and ggplot along with the pipe operator to create a histogram of SelfEmployed
 for all counties in the US with total population > 75000.
 
 ```{r histo1}
-# county_df %>%
-#   ??? %>%
-#   ggplot(???) + ???
+county_df %>%
+  filter(TotalPop>75000)%>%   
+  ggplot(aes(SelfEmployed)) +
+  geom_histogram(fill="Light Blue",color="Black") +
+  theme_minimal() +
+  labs(x="% of Self Employed",title="Distribution Of SelfEmployed Population for Counties with Population>75000")
 ```
 
 
@@ -432,13 +491,35 @@ a data frame to plot. Hint: You'll also want to learn about the `stat` layer in 
 
 
 ```{r create_df_toplot}
-# pop_by_region <- county_df %>%
-#   ??? %>%
-#   ???)
+
+pop_by_region <- county_df %>% 
+  group_by(Region)
+
+
+
+pop_by_region2  <- county_df %>% 
+  group_by(Region) %>% 
+  select(Region,TotalPop)%>%
+  summarise(TotalPopulation = sum(TotalPop))
+
+
+  
+
+
+  
 ```
 
 ```{r barchart}
-# ggplot(data=pop_by_region) + ???
+
+ggplot(data=pop_by_region, aes(x=Region,y=TotalPop))+
+  geom_bar(stat = "summary", fun.y = "sum",color='Black',fill = 'Light Blue')
+
+
+ggplot(data=pop_by_region2,aes(x=Region,y = TotalPopulation)) +
+  geom_bar(stat="identity",color='Black',fill = 'Light Blue')
+
+
+
 ```
 
 
@@ -446,6 +527,11 @@ Now redo the previous plot but make it a horizontal bar plot and order the bars
 from longest to shortest.
 
 ```{r}
+
+ggplot(data=pop_by_region2,aes(x=reorder(Region, TotalPopulation) ,y = TotalPopulation)) +
+  geom_bar(stat="identity",color='Black',fill = 'Light Blue')+
+    coord_flip()
+
 
 ```
 
@@ -464,14 +550,23 @@ Hint: The tidyr package is helpful.
 
 ```{r}
 # jobtype <- several lines to create dataframe to drive the plot 
+jobtype<-   melt( county_MI %>%   filter(County %in% c('Macomb', 'Oakland','Wayne')) %>%
+  select (County,Construction,Office,Production,Professional,Service))
+
 ```
 
 ```{r}
-# ggplot(jobtype) + 
-#   geom_bar(???)
+ggplot(jobtype, aes(x = County, y = value, fill = variable)) + 
+  geom_bar(stat = "identity") +
+  scale_fill_discrete(name = "Work Type" )+
+  labs(y="PCt",title="Job Type for Mertro Detroit Area")
 
 # Here's how to save a plot to a file
 ggsave('images/stacked_bars_test.png')
+
+#Check if saved 
+knitr::include_graphics('images/stacked_bars_test.png')
+
 ```
 
 

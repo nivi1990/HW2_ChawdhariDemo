@@ -68,6 +68,8 @@ Let's load a few libraries we'll need:
 library(plyr)
 library(dplyr)
 library(ggplot2)
+library(corrplot)
+
 ```
 
 
@@ -386,7 +388,6 @@ Amongst the variables used for the correlation matrix,
 **There is a negative relation between ChildPoverty and IncomePerCapita i.e with increase in IncomePerCapita the ChildPoverty for a county decreases,A increase in per capita income can be looked up as a good economic growth of a county,which implies good employment opportunies and lower unemployment rate would thus coincide with lower poverty rate.**
 
 ```{r correlation}
-library(corrplot)
 
 Cordata <-na.omit(county_df[,c("TotalPop","IncomePerCap","ChildPoverty")])  
 cormat<-cor(Cordata)

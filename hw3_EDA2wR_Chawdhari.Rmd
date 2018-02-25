@@ -70,6 +70,7 @@ library(dplyr)
 library(ggplot2)
 library(corrplot)
 library(reshape2)
+library(formattable)
 
 ```
 
@@ -230,7 +231,8 @@ County with highest percentage of women? Lowest percentage of women? Create dply
 statements that make it easy to answer these questions.
 
 ```{r mutate4a}
-county_MI_x %>% filter(pct_F == max(pct_F)) %>% select(County,pct_F)
+result<- county_MI_x %>% filter(pct_F == max(pct_F)) %>% select(County,pct_F)
+formattable(result)
 
 ```
 
@@ -255,10 +257,15 @@ Production sum up to 100 (within +- .105). There are a number of ways to do
 this. You could use `mutate` and/or use base R commands.
 
 ```{r}
-# tot_job_type <- ???
-# 
-# summary(tot_job_type)
-# err_tol <- 0.105
+county_df%>%
+mutate(tot_job_type <- county_df$Professional + county_df$Service + county_df$Office + county_df$Construction +county_df$Production)
+tot_job_type
+summary(tot_job_type)
+
+err_tol <- 0.105
+
+result <- all(tot_job_type < 0.105)  
+result
 # ???
 ```
 
@@ -387,6 +394,7 @@ For this next question you do **not** need plyr or dplyr.
 
 Create a correlation matrix for total population, per capita income and child poverty. 
 Amongst the variables used for the correlation matrix,
+
 **Total Population does not seem to have any significant relation with either ChildPoverty or IncomePerCapita**
 **There is a negative relation between ChildPoverty and IncomePerCapita i.e with increase in IncomePerCapita the ChildPoverty for a county decreases,A increase in per capita income can be looked up as a good economic growth of a county,which implies good employment opportunies and lower unemployment rate would thus coincide with lower poverty rate.**
 
@@ -418,7 +426,7 @@ cat(mean(column))
 cat('\nMedian  :')
 cat(median(column))
 cat('\nMidrange  :')
-cat(range(column)/2)
+cat(max(column)+min(column)/2)
 cat('\n\nMeasure of Dispersion')
 cat('\n----------------------------')
 cat('\nRange :')
@@ -429,7 +437,7 @@ cat('\nSTD Deviation  :')
 cat(sd(column))
 cat('\nCV  :')
 cat(mean(column)/sd(column))
-cat('\n\nExtreme and Qunatiles')
+cat('\n\nExtreme and Quantiles')
 cat('\n----------------------------')
 cat('\nMin  :')
 cat(min(column)) 
@@ -553,6 +561,8 @@ Hint: The tidyr package is helpful.
 jobtype<-   melt( county_MI %>%   filter(County %in% c('Macomb', 'Oakland','Wayne')) %>%
   select (County,Construction,Office,Production,Professional,Service))
 
+
+jobtype
 ```
 
 ```{r}
@@ -574,3 +584,15 @@ knitr::include_graphics('images/stacked_bars_test.png')
 ### Hacker Extra - Do some more analysis
 
 Try a few things on your own to learn more about the counties in Michigan.
+
+**Counties with higher Unemployment**
+
+```{r}
+df <- county_MI %>% group_by(County)%>% summarise(Unemoloyment_rate = ave(Unemployment)) %>% arrange(desc(Unemoloyment_rate))
+formattable(df, list(area(col = c(Unemoloyment_rate)) ~ normalize_bar("pink", 0.5)) )
+
+
+CommuteMeans<-   melt( county_MI %>%  select (County,Drive,Carpool,Walk,OtherTransp)) 
+CommuteMeans %>% group_by(County,Mean_of_Commute = variable) %>% summarise(AverageCommute =ave(value))
+```
+
